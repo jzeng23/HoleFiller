@@ -5,14 +5,15 @@
 
 int main() {
 	ifstream infile;
-	infile.open("../test_data/sphere_500_hole_3.off");
+	infile.open("../test_data/sphere_500_hole_4.off");
 	ofstream outfile;
-	outfile.open("../outputs/sphere_500_hole_3_naive_fill.off");
+	outfile.open("../outputs/sphere_500_hole_4_naive_fill.off");
 	string line;
 	int num_vertices;
 	int num_faces;
 	int num_edges;
 	vector<Vertex> vertices;
+	vector<string> vertices_str;
 	vector<Triangle> triangles;
 	vector<Edge> hole_edges;
 
@@ -26,6 +27,7 @@ int main() {
 
 		for (int i = 0; i < num_vertices; ++i) {
 			getline(infile, line);
+			vertices_str.push_back(line);
 			stringstream line_stream(line);
 			string x_str;
 			line_stream >> x_str;
@@ -121,6 +123,7 @@ int main() {
 			cout << endl;
 			cout << "before fill: " << vertices.size() << " vertices, " << triangles.size() << " triangles" << endl;
 			hole.fill_naive(triangles, vertices);
+			vertices_str.push_back(vertices.back().toString());
 			cout << "after fill: " << vertices.size() << " vertices, " << triangles.size() << " triangles" << endl;
 			cout << endl;
 			cout << endl;
@@ -129,8 +132,12 @@ int main() {
 		//write to output file
 		outfile << "OFF" << endl;
 		outfile << vertices.size() << " " << triangles.size() << " 0" << endl;
+		/*
 		for (vector<Vertex>::iterator vertices_iterator = vertices.begin(); vertices_iterator != vertices.end(); ++vertices_iterator) {
 			outfile << (*vertices_iterator).x_ << " " << (*vertices_iterator).y_ << " " << (*vertices_iterator).z_ << endl;
+		}*/
+		for (int h = 0; h < vertices_str.size(); ++h) {
+			outfile << vertices_str.at(h) << endl;
 		}
 		for (vector<Triangle>::iterator triangle_iterator = triangles.begin(); triangle_iterator != triangles.end(); ++triangle_iterator) {
 			outfile << "3 " << (*triangle_iterator).p1_ << " " << (*triangle_iterator).p2_ << " " << (*triangle_iterator).p3_ << endl;

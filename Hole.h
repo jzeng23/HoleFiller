@@ -31,7 +31,7 @@ struct Hole {
 
 		centroid_ = Vertex(centroid_x, centroid_y, centroid_z, all_vertices.size());
 		all_vertices.push_back(centroid_);
-		return all_vertices.size();
+		return centroid_.index_;
 	}
 
 	void fill_naive(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
@@ -40,11 +40,12 @@ struct Hole {
 		for (unsigned int i = 0; i < vertices_.size() - 1; ++i) {
 			v1 = vertices_.at(i).index_;
 			v2 = vertices_.at(i + 1).index_;
-			triangles.push_back(Triangle(v1, v2, centroid_index));
+			//triangles.push_back(Triangle(v2, v1, centroid_index));
+			triangles.push_back(Triangle(v1, centroid_index, v2));
 		}
 
 		v1 = vertices_.front().index_;
 		v2 = vertices_.back().index_;
-		triangles.push_back(Triangle(v1, v2, centroid_index));
+		triangles.push_back(Triangle(v2, centroid_index, v1));
 	}
 };
