@@ -12,3 +12,5 @@
 #include "Vertex.h"
 
 using namespace std;
+
+enum result {SUCCESS, ARGS, EXCEPTION};
