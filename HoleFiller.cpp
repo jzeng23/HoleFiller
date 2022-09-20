@@ -3,6 +3,16 @@
 
 #include "HoleFiller.h"
 
+double dihedral_angle(Triangle t1, Triangle t2) {
+	vector<double> normal_1 = t1.normal();
+	vector<double> normal_2 = t2.normal();
+	double magnitude_1 = sqrt(pow(normal_1.at(0), 2) + pow(normal_1.at(1), 2) + pow(normal_1.at(2), 2));
+	double magnitude_2 = sqrt(pow(normal_2.at(0), 2) + pow(normal_2.at(1), 2) + pow(normal_2.at(2), 2));
+	double dot_product = normal_1.at(0) * normal_2.at(0) + normal_1.at(1) * normal_2.at(1) + normal_1.at(2) * normal_2.at(2);
+	double cos_angle = abs(dot_product) / (magnitude_1 * magnitude_2);
+	return acos(cos_angle);
+}
+
 int main(int argc, char** argv) {
 	if (argc != 2) {
 		cout << "Usage: ./HoleFiller <filename without '.off'>" << endl;
@@ -18,9 +28,7 @@ int main(int argc, char** argv) {
 		int num_vertices;
 		int num_faces;
 		int num_edges;
-		vector<Vertex> vertices;
-		vector<string> vertices_str;
-		vector<Triangle> triangles;
+	
 		vector<Edge> hole_edges;
 
 
@@ -55,7 +63,7 @@ int main(int argc, char** argv) {
 				infile >> v2;
 				infile >> v3;
 
-				triangles.push_back(Triangle(v1, v2, v3));
+				triangles.push_back(Triangle(vertices.at(v1), vertices.at(v2), vertices.at(v3)));
 
 				Edge e1 = Edge(v1, v2);
 				Edge e2 = Edge(v2, v3);
@@ -121,6 +129,9 @@ int main(int argc, char** argv) {
 					}
 				}
 				holes.push_back(hole);
+
+
+
 				vector<Vertex>::iterator point_iterator;
 				for (point_iterator = hole.vertices_.begin(); point_iterator != hole.vertices_.end(); ++point_iterator) {
 					cout << (*point_iterator).index_ << " ";
@@ -148,7 +159,7 @@ int main(int argc, char** argv) {
 			}
 			*/
 			for (vector<Triangle>::iterator triangle_iterator = triangles.begin(); triangle_iterator != triangles.end(); ++triangle_iterator) {
-				outfile << "3 " << (*triangle_iterator).p1_ << " " << (*triangle_iterator).p2_ << " " << (*triangle_iterator).p3_ << endl;
+				outfile << "3 " << (*triangle_iterator).v1.index_ << " " << (*triangle_iterator).v2.index_ << " " << (*triangle_iterator).v3.index_ << endl;
 			}
 
 			outfile.close();
