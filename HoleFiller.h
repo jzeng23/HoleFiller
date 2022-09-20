@@ -20,5 +20,3 @@ enum result {SUCCESS, ARGS, EXCEPTION};
 vector<Vertex> vertices;
 vector<string> vertices_str;
 vector<Triangle> triangles;
-
-double dihedral_angle(Triangle t1, Triangle t2);

@@ -9,6 +9,7 @@ using namespace std;
 
 struct Hole {
 	vector<Vertex> vertices_;
+	vector<Triangle> boundaryTriangles_;
 	Vertex centroid_;
 	Hole() {}
 	Hole(vector<Vertex> vv) : vertices_(vv) {}
@@ -65,18 +66,74 @@ struct Hole {
 		double semiperimeter = (side_1 + side_2 + side_3) / 3;
 		return sqrt(semiperimeter * (semiperimeter - side_1) * (semiperimeter - side_2) * (semiperimeter - side_3));
 	}
+
+	double dihedral_angle(Triangle t1, Triangle t2) {
+		vector<double> normal_1 = t1.normal();
+		vector<double> normal_2 = t2.normal();
+		double magnitude_1 = sqrt(pow(normal_1.at(0), 2) + pow(normal_1.at(1), 2) + pow(normal_1.at(2), 2));
+		double magnitude_2 = sqrt(pow(normal_2.at(0), 2) + pow(normal_2.at(1), 2) + pow(normal_2.at(2), 2));
+		double dot_product = normal_1.at(0) * normal_2.at(0) + normal_1.at(1) * normal_2.at(1) + normal_1.at(2) * normal_2.at(2);
+		double cos_angle = abs(dot_product) / (magnitude_1 * magnitude_2);
+		return acos(cos_angle);
+	}
+
+	//a and b are indices on the vertices_ vector
+	int add_boundary_triangle(int a, int b, vector<Triangle>& triangles) {
+		int p1 = vertices_.at(a).index_;
+		int p2 = vertices_.at(b).index_;
+		int lambda = -1;
+		for (unsigned int i = 0; i < triangles.size(); ++i) {
+			if (triangles.at(i).containsPair(p1, p2)) {
+				vector<int> bt_vertices = triangles.at(i).vertexIndexVector();
+				for (int k = 0; k < 3; ++k) {
+					if (bt_vertices.at(k) != p1 && bt_vertices.at(k) != p2) {
+						lambda = bt_vertices.at(k);
+					}
+				}
+				boundaryTriangles_.push_back(triangles.at(i));
+				return lambda;
+			}
+		}
+		return lambda;
+	}
 	
 	void fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 		vector< vector<Weight> > weights;
 		vector<Weight> w1;
 		int n = vertices_.size();
 		for (int i = 0; i <= n - 2; ++i) {
-			w1.push_back(Weight(i, i + 1, -1, 0, 0));
+			int lambda = this->add_boundary_triangle(i, i + 1, triangles);
+			w1.push_back(Weight(i, i + 1, lambda, 0, 0));
 		}
 
 		weights.push_back(w1);
+		vector<Triangle> patchTriangles;
+		vector<Weight> w2;
 		for (int i = 0; i <= n - 3; ++i) {
+			Triangle currentTriangle = Triangle(vertices_.at(i), vertices_.at(i + 1), vertices_.at(i + 2));
+			double angle1 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i));
+			double angle2 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i+1));
+			w2.push_back(Weight(i, i + 2, i + 1, max(angle1, angle2), currentTriangle.area()));
 			
+		}
+		weights.push_back(w2);
+		for (int j = 3; j < n - 1; ++j) {
+			vector<Weight>currentW;
+			for (int i = 0; i <= n - j - 1; ++i) {
+				Weight w_ik;
+				int k = i + j;
+				for (int m = i + 1; m < k; ++m) {
+					Triangle currentTriangle = Triangle(vertices_.at(i), vertices_.at(m), vertices_.at(k));
+					Weight w_im = weights.at(m - i - 1).at(i);
+					Triangle t_im = Triangle(vertices_.at(i), all_vertices.at(w_im.lambda), vertices_.at(m));
+					double angle1 = dihedral_angle(currentTriangle, t_im);
+					Weight w_mk = weights.at(k - m - 1).at(m);
+					Triangle t_mk = Triangle(vertices_.at(m), all_vertices.at(w_mk.lambda), vertices_.at(k));
+					double angle2 = dihedral_angle(currentTriangle, t_mk);
+					Weight omega_imk = Weight(i, k, m, max(angle1, angle2), currentTriangle.area());
+
+				}
+			}
 		}
 	}
 	

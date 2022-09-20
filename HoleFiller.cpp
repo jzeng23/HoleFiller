@@ -3,16 +3,6 @@
 
 #include "HoleFiller.h"
 
-double dihedral_angle(Triangle t1, Triangle t2) {
-	vector<double> normal_1 = t1.normal();
-	vector<double> normal_2 = t2.normal();
-	double magnitude_1 = sqrt(pow(normal_1.at(0), 2) + pow(normal_1.at(1), 2) + pow(normal_1.at(2), 2));
-	double magnitude_2 = sqrt(pow(normal_2.at(0), 2) + pow(normal_2.at(1), 2) + pow(normal_2.at(2), 2));
-	double dot_product = normal_1.at(0) * normal_2.at(0) + normal_1.at(1) * normal_2.at(1) + normal_1.at(2) * normal_2.at(2);
-	double cos_angle = abs(dot_product) / (magnitude_1 * magnitude_2);
-	return acos(cos_angle);
-}
-
 int main(int argc, char** argv) {
 	if (argc != 2) {
 		cout << "Usage: ./HoleFiller <filename without '.off'>" << endl;

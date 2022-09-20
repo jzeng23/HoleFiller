@@ -24,7 +24,7 @@ struct Triangle {
 		return result;
 	}
 
-	double area(vector<Vertex>& vertices) {
+	double area() {
 		auto distance = [](Vertex a, Vertex b) {
 			double delta_x = a.x_ - b.x_;
 			double delta_y = a.y_ - b.y_;
@@ -37,5 +37,43 @@ struct Triangle {
 		double side_3 = distance(v3, v1);
 		double semiperimeter = (side_1 + side_2 + side_3) / 3;
 		return sqrt(semiperimeter * (semiperimeter - side_1) * (semiperimeter - side_2) * (semiperimeter - side_3));
+	}
+
+	vector<int> vertexIndexVector() {
+		vector<int>indices;
+		indices.push_back(this->v1.index_);
+		indices.push_back(this->v2.index_);
+		indices.push_back(this->v3.index_);
+		return indices;
+	}
+
+	bool adjacent(Triangle t) {
+		vector<int> indices1 = this->vertexIndexVector();
+		vector<int> indices2 = t.vertexIndexVector();
+		int shared_vertices = 0;
+		for (int i = 0; i < 3; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				if (indices1.at(i) == indices2.at(j)) {
+					shared_vertices++;
+				}
+				if (shared_vertices == 2) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	//takes index of 2 vertices, determines whether the triangle has both of these vertices
+	bool containsPair(int a, int b) {
+		vector<int> indices = this->vertexIndexVector();
+		int shared_vertices = 0;
+		for (int i = 0; i < 3; ++i) {
+			if (indices.at(i) == a || indices.at(i) == b) {
+				shared_vertices++;
+			}
+		}
+		return shared_vertices == 2;
 	}
 };
