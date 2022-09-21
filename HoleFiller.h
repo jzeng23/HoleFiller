@@ -18,5 +18,4 @@ using namespace std;
 enum result {SUCCESS, ARGS, EXCEPTION};
 
 vector<Vertex> vertices;
-vector<string> vertices_str;
 vector<Triangle> triangles;

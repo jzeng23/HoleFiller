@@ -31,7 +31,6 @@ int main(int argc, char** argv) {
 
 			for (int i = 0; i < num_vertices; ++i) {
 				getline(infile, line);
-				vertices_str.push_back(line);
 				stringstream line_stream(line);
 				string x_str;
 				line_stream >> x_str;
@@ -130,7 +129,6 @@ int main(int argc, char** argv) {
 				cout << endl;
 				cout << "before fill: " << vertices.size() << " vertices, " << triangles.size() << " triangles" << endl;
 				hole.fill_naive(triangles, vertices);
-				vertices_str.push_back(vertices.back().toString());
 				cout << "after fill: " << vertices.size() << " vertices, " << triangles.size() << " triangles" << endl;
 				cout << endl;
 				cout << endl;
