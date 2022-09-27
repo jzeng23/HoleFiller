@@ -69,23 +69,25 @@ double Hole::triangle_area(Vertex v1, Vertex v2, Vertex v3) {
 }
 
 //a and b are indices on the vertices_ vector
+//p1 and p2 are indices on the all_vertices vector for a and b, respectively
+//p3 is the all_vertices index of the third vertex (so it's not on the hole boundary)
 int Hole::add_boundary_triangle(int a, int b, vector<Triangle>& triangles) {
 	int p1 = vertices_.at(a).index_;
 	int p2 = vertices_.at(b).index_;
-	int lambda = -1;
+	int p3 = -1;
 	for (unsigned int i = 0; i < triangles.size(); ++i) {
 		if (triangles.at(i).containsPair(p1, p2)) {
 			vector<int> bt_vertices = triangles.at(i).vertexIndexVector();
 			for (int k = 0; k < 3; ++k) {
 				if (bt_vertices.at(k) != p1 && bt_vertices.at(k) != p2) {
-					lambda = bt_vertices.at(k);
+					p3 = bt_vertices.at(k);
 				}
 			}
 			boundaryTriangles_.push_back(triangles.at(i));
-			return lambda;
+			return p3;
 		}
 	}
-	return lambda;
+	return p3;
 }
 
 void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
@@ -94,6 +96,7 @@ void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 	int n = vertices_.size();
 	for (int i = 0; i <= n - 2; ++i) {
 		int lambda = this->add_boundary_triangle(i, i + 1, triangles);
+		//i and i+1 are indices for vertices_ member variable. lambda is an index for all_vertices
 		w1.push_back(Weight(i, i + 1, lambda, 0, 0));
 	}
 
@@ -104,7 +107,7 @@ void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 		Triangle currentTriangle = Triangle(vertices_.at(i), vertices_.at(i + 1), vertices_.at(i + 2));
 		double angle1 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i));
 		double angle2 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i + 1));
-		w2.push_back(Weight(i, i + 2, i + 1, max(angle1, angle2), currentTriangle.area()));
+		w2.push_back(Weight(i, i + 2, vertices_.at(i + 1).index_, max(angle1, angle2), currentTriangle.area()));
 
 	}
 	weights.push_back(w2);
@@ -121,9 +124,15 @@ void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 				Weight w_mk = weights.at(k - m - 1).at(m);
 				Triangle t_mk = Triangle(vertices_.at(m), all_vertices.at(w_mk.lambda), vertices_.at(k));
 				double angle2 = dihedral_angle(currentTriangle, t_mk);
-				Weight omega_imk = Weight(i, k, m, max(angle1, angle2), currentTriangle.area());
-
+				Weight omega_imk = Weight(i, k, vertices_.at(m).index_, max(angle1, angle2), currentTriangle.area());
+				Weight w_imk = w_im + w_mk + omega_imk;
+				if (w_ik.lambda == -1 || w_imk < w_ik) {
+					w_ik = w_imk;
+				}
 			}
+			currentW.push_back(w_ik);
+			triangles.push_back(Triangle(vertices_.at(w_ik.i), all_vertices.at(w_ik.lambda), vertices_.at(w_ik.k)));
 		}
+		weights.push_back(currentW);
 	}
 }

@@ -1,6 +1,10 @@
 #pragma once
 
+#include <algorithm>
+
 using namespace std;
+
+bool close_enough(double a, double b);
 
 struct Weight {
 	int i;
@@ -10,4 +14,6 @@ struct Weight {
 	double area;
 	Weight();
 	Weight(int index_i, int index_k, int index_lambda, double mew, double omega_area);
+	bool operator<(Weight& w);
+	Weight operator+(Weight& w);
 };

@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
 				cout << endl;
 				cout << endl;
 				cout << "before fill: " << vertices.size() << " vertices, " << triangles.size() << " triangles" << endl;
-				hole.fill_naive(triangles, vertices);
+				hole.fill(triangles, vertices);
 				cout << "after fill: " << vertices.size() << " vertices, " << triangles.size() << " triangles" << endl;
 				cout << endl;
 				cout << endl;

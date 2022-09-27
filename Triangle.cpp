@@ -32,8 +32,9 @@ double Triangle::area() {
 	double side_1 = distance(v1, v2);
 	double side_2 = distance(v2, v3);
 	double side_3 = distance(v3, v1);
-	double semiperimeter = (side_1 + side_2 + side_3) / 3;
-	return sqrt(semiperimeter * (semiperimeter - side_1) * (semiperimeter - side_2) * (semiperimeter - side_3));
+	double semiperimeter = (side_1 + side_2 + side_3) / 2;
+	double area = sqrt(semiperimeter * (semiperimeter - side_1) * (semiperimeter - side_2) * (semiperimeter - side_3));
+	return area;
 }
 
 vector<int> Triangle::vertexIndexVector() {
