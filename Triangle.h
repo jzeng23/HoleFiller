@@ -15,4 +15,5 @@ struct Triangle {
 	vector<int> vertexIndexVector();
 	bool adjacent(Triangle t);
 	bool containsPair(int a, int b);
+	int getLone(Triangle t);
 };

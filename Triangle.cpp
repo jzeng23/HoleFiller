@@ -74,3 +74,15 @@ bool Triangle::containsPair(int a, int b) {
 	}
 	return shared_vertices == 2;
 }
+
+int Triangle::getLone(Triangle t) {
+	int lone = -1;
+	vector<int> indices = this->vertexIndexVector();
+	vector<int> indicesT = t.vertexIndexVector();
+	for (int i = 0; i < 3; ++i) {
+		if (indicesT.at(i) != indices.at(0) && indicesT.at(i) != indices.at(1) && indicesT.at(i) != indices.at(2)) {
+			lone = indicesT.at(i);
+		}
+	}
+	return lone;
+}

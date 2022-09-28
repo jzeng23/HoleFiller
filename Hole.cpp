@@ -14,6 +14,42 @@ double dihedral_angle(Triangle t1, Triangle t2) {
 	return acos(cos_angle);
 }
 
+double distance(Vertex a, Vertex b) {
+	double delta_x = a.x_ - b.x_;
+	double delta_y = a.y_ - b.y_;
+	double delta_z = a.z_ - b.z_;
+	return sqrt(pow(delta_x, 2) + pow(delta_y, 2) + pow(delta_z, 2));
+}
+
+double angle(Vertex A, Vertex B, Vertex C) {
+	//calculates angle abc in radians
+	double a = distance(B, C);
+	double b = distance(A, C);
+	double c = distance(A, B);
+
+	double cos_abc = (pow(a, 2) + pow(c, 2) - pow(b, 2)) / (2 * a * c);
+	return acos(cos_abc);
+}
+
+double dihedral_angle(Vertex shared_1, Vertex shared_2, Vertex lone_1, Vertex lone_2) {
+	//calculates dihedral angle around edge (shared_1, shared_2) in radians
+	auto get_cos = [](Vertex A, Vertex B, Vertex C) {
+		double a = distance(B, C);
+		double b = distance(A, C);
+		double c = distance(A, B);
+
+		double cos_abc = (pow(a, 2) + pow(c, 2) - pow(b, 2)) / (2 * a * c);
+		return cos_abc;
+	};
+
+	double l1_s1_l2 = angle(lone_1, shared_1, lone_2);
+	double l1_s1_s2 = angle(lone_1, shared_1, shared_2);
+	double l2_s1_s2 = angle(lone_2, shared_1, shared_2);
+
+	double cos_result = (cos(l1_s1_l2) - cos(l1_s1_s2) * cos(l2_s1_s2)) / (sin(l1_s1_s2) * sin(l2_s1_s2));
+	return acos(cos_result);
+}
+
 void Hole::add_vertex(Vertex v) {
 	vertices_.push_back(v);
 	return;
@@ -90,15 +126,40 @@ int Hole::add_boundary_triangle(int a, int b, vector<Triangle>& triangles) {
 	return p3;
 }
 
+// based on https://www.sciencedirect.com/science/article/pii/016783969400011G, page 220
+void Hole::trace(int i, int k, vector<Triangle>& triangles, vector< vector<Weight> > weights) {
+	if (i + 2 == k) {
+		triangles.push_back(Triangle(vertices_.at(i), vertices_.at(k), vertices_.at(i + 1)));
+		return;
+	}
+
+	int lambda = weights.at(k - i - 1).at(i).lambda;
+	if (lambda != i + 1) {
+		this->trace(i, lambda, triangles, weights);
+	}
+	if (lambda >= 0 && i >= 0 && k >= 0) {
+		triangles.push_back(Triangle(vertices_.at(i), vertices_.at(k), vertices_.at(lambda)));
+	}
+	
+	if (lambda != k - 1) {
+		this->trace(lambda, k, triangles, weights);
+	}
+	
+}
+
 void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 	vector< vector<Weight> > weights;
 	vector<Weight> w1;
 	int n = vertices_.size();
+	int result_index = 0;
 	for (int i = 0; i <= n - 2; ++i) {
-		int lambda = this->add_boundary_triangle(i, i + 1, triangles);
+		result_index = this->add_boundary_triangle(i, i + 1, triangles);
 		//i and i+1 are indices for vertices_ member variable. lambda is an index for all_vertices
-		w1.push_back(Weight(i, i + 1, lambda, 0, 0));
+		w1.push_back(Weight(i, i + 1, -1, all_vertices.at(result_index), 0, 0));
 	}
+
+	result_index = this->add_boundary_triangle(n - 1, 0, triangles);
+	w1.push_back(Weight(n - 1, 0, -1, all_vertices.at(result_index), 0, 0));
 
 	weights.push_back(w1);
 	vector<Triangle> patchTriangles;
@@ -107,11 +168,11 @@ void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 		Triangle currentTriangle = Triangle(vertices_.at(i), vertices_.at(i + 1), vertices_.at(i + 2));
 		double angle1 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i));
 		double angle2 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i + 1));
-		w2.push_back(Weight(i, i + 2, vertices_.at(i + 1).index_, max(angle1, angle2), currentTriangle.area()));
+		w2.push_back(Weight(i, i + 2, i + 1, vertices_.at(i + 1), max(angle1, angle2), currentTriangle.area()));
 
 	}
 	weights.push_back(w2);
-	for (int j = 3; j < n - 1; ++j) {
+	for (int j = 3; j < n; ++j) {
 		vector<Weight>currentW;
 		for (int i = 0; i <= n - j - 1; ++i) {
 			Weight w_ik;
@@ -119,20 +180,32 @@ void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 			for (int m = i + 1; m < k; ++m) {
 				Triangle currentTriangle = Triangle(vertices_.at(i), vertices_.at(m), vertices_.at(k));
 				Weight w_im = weights.at(m - i - 1).at(i);
-				Triangle t_im = Triangle(vertices_.at(i), all_vertices.at(w_im.lambda), vertices_.at(m));
+				Triangle t_im = Triangle(vertices_.at(i), w_im.lambda_vertex, vertices_.at(m));
 				double angle1 = dihedral_angle(currentTriangle, t_im);
 				Weight w_mk = weights.at(k - m - 1).at(m);
-				Triangle t_mk = Triangle(vertices_.at(m), all_vertices.at(w_mk.lambda), vertices_.at(k));
+				Triangle t_mk = Triangle(vertices_.at(m), w_mk.lambda_vertex, vertices_.at(k));
 				double angle2 = dihedral_angle(currentTriangle, t_mk);
-				Weight omega_imk = Weight(i, k, vertices_.at(m).index_, max(angle1, angle2), currentTriangle.area());
+				Weight omega_imk = Weight(i, k, m, vertices_.at(m), max(angle1, angle2), currentTriangle.area());
 				Weight w_imk = w_im + w_mk + omega_imk;
-				if (w_ik.lambda == -1 || w_imk < w_ik) {
+				if (w_ik.lambda == -1 || w_imk.angle < w_ik.angle) {
+					w_ik = w_imk;
+				}
+				else if (w_imk.angle == w_ik.angle && w_imk.area < w_ik.area) {
 					w_ik = w_imk;
 				}
 			}
+			/*
+			if (j == n - 1) {
+				Triangle t_ik = Triangle(vertices_.at(w_ik.i), w_ik.lambda_vertex, vertices_.at(w_ik.k));
+				double angle3 = dihedral_angle(t_ik, boundaryTriangles_.at(n - 1));
+				w_ik.angle = max(w_ik.angle, angle3);
+			}*/
 			currentW.push_back(w_ik);
-			triangles.push_back(Triangle(vertices_.at(w_ik.i), all_vertices.at(w_ik.lambda), vertices_.at(w_ik.k)));
+			//triangles.push_back(Triangle(vertices_.at(w_ik.i), vertices_.at(w_ik.k), w_ik.lambda_vertex));
 		}
+		cout << currentW.size() << endl;
 		weights.push_back(currentW);
 	}
+
+	this->trace(0, n-1, triangles, weights);
 }
