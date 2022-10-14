@@ -1,16 +1,61 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <algorithm>
 #include "Hole.h"
 
 Hole::Hole() {}
 
 Hole::Hole(vector<Vertex> vv) : vertices_(vv) {}
 
-double dihedral_angle(Triangle t1, Triangle t2) {
-	vector<double> normal_1 = t1.normal();
-	vector<double> normal_2 = t2.normal();
+vector<double> normal(Vertex v1, Vertex v2, Vertex v3) {
+
+	double x1 = v1.x_ - v2.x_;
+	double y1 = v1.y_ - v2.y_;
+	double z1 = v1.z_ - v2.z_;
+
+	double x2 = v3.x_ - v2.x_;
+	double y2 = v3.y_ - v2.y_;
+	double z2 = v3.z_ - v2.z_;
+
+	vector<double> result;
+	result.push_back(y1 * z2 - z1 * y2);
+	result.push_back(-1 * (x1 * z2 - z1 * x2));
+	result.push_back(x1 * y2 - y1 * x2);
+
+	return result;
+}
+
+double dihedral_angle(Triangle t1, Triangle t2, vector<Vertex>& all_vertices) {
+	vector<Vertex> shared;
+	vector<int> shared_indices;
+	vector<int> lone1;
+	vector<int> lone2;
+	vector<Vertex> not_shared;
+	vector<int> v1 = t1.vertexIndexVector();
+	sort(v1.begin(), v1.end());
+	vector<int> v2 = t2.vertexIndexVector();
+	sort(v2.begin(), v2.end());
+	vector<int>::iterator v1b = v1.begin();
+	vector<int>::iterator v1e = v1.end();
+	vector<int>::iterator v2b = v2.begin();
+	vector<int>::iterator v2e = v2.end();
+	set_intersection(v1b, v1e, v2b, v2e, back_inserter(shared_indices));
+	set_difference(v1b, v1e, v2b, v2e, back_inserter(lone1));
+	set_difference(v2b, v2e, v1b, v1e, back_inserter(lone2));
+
+
+	Vertex s1 = all_vertices.at(shared_indices.at(0));
+	Vertex s2 = all_vertices.at(shared_indices.at(1));
+	Vertex l1 = all_vertices.at(lone1.at(0));
+	Vertex l2 = all_vertices.at(lone2.at(0));
+	
+	vector<double> normal_1 = normal(s1, s2, l1);
+	vector<double> normal_2 = normal(s2, s1, l2);
+
 	double magnitude_1 = sqrt(pow(normal_1.at(0), 2) + pow(normal_1.at(1), 2) + pow(normal_1.at(2), 2));
 	double magnitude_2 = sqrt(pow(normal_2.at(0), 2) + pow(normal_2.at(1), 2) + pow(normal_2.at(2), 2));
 	double dot_product = normal_1.at(0) * normal_2.at(0) + normal_1.at(1) * normal_2.at(1) + normal_1.at(2) * normal_2.at(2);
-	double cos_angle = abs(dot_product) / (magnitude_1 * magnitude_2);
+	double cos_angle = dot_product / (magnitude_1 * magnitude_2);
 	return acos(cos_angle);
 }
 
@@ -166,8 +211,8 @@ void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 	vector<Weight> w2;
 	for (int i = 0; i <= n - 3; ++i) {
 		Triangle currentTriangle = Triangle(vertices_.at(i), vertices_.at(i + 1), vertices_.at(i + 2));
-		double angle1 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i));
-		double angle2 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i + 1));
+		double angle1 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i), all_vertices);
+		double angle2 = dihedral_angle(currentTriangle, boundaryTriangles_.at(i + 1), all_vertices);
 		w2.push_back(Weight(i, i + 2, i + 1, vertices_.at(i + 1), max(angle1, angle2), currentTriangle.area()));
 
 	}
@@ -181,10 +226,10 @@ void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 				Triangle currentTriangle = Triangle(vertices_.at(i), vertices_.at(m), vertices_.at(k));
 				Weight w_im = weights.at(m - i - 1).at(i);
 				Triangle t_im = Triangle(vertices_.at(i), w_im.lambda_vertex, vertices_.at(m));
-				double angle1 = dihedral_angle(currentTriangle, t_im);
+				double angle1 = dihedral_angle(currentTriangle, t_im, all_vertices);
 				Weight w_mk = weights.at(k - m - 1).at(m);
 				Triangle t_mk = Triangle(vertices_.at(m), w_mk.lambda_vertex, vertices_.at(k));
-				double angle2 = dihedral_angle(currentTriangle, t_mk);
+				double angle2 = dihedral_angle(currentTriangle, t_mk, all_vertices);
 				Weight omega_imk = Weight(i, k, m, vertices_.at(m), max(angle1, angle2), currentTriangle.area());
 				Weight w_imk = w_im + w_mk + omega_imk;
 				if (w_ik.lambda == -1 || w_imk.angle < w_ik.angle) {
@@ -205,7 +250,7 @@ void Hole::fill(vector<Triangle>& triangles, vector<Vertex>& all_vertices) {
 		}
 		cout << currentW.size() << endl;
 		weights.push_back(currentW);
-	}
 
-	this->trace(0, n-1, triangles, weights);
+	}
+	this->trace(0, n - 1, triangles, weights);
 }

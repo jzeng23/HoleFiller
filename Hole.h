@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include <vector>
-#include <cmath>
 #include "Vertex.h"
 #include "Triangle.h"
 #include "Weight.h"
@@ -9,8 +8,9 @@
 using namespace std;
 
 double distance(Vertex a, Vertex b);
-double dihedral_angle(Triangle t1, Triangle t2);
+double dihedral_angle(Triangle t1, Triangle t2, vector<Vertex>& all_vertices);
 double dihedral_angle(Vertex shared_1, Vertex shared_2, Vertex lone_1, Vertex lone_2);
+vector<double> normal(Vertex v1, Vertex v2, Vertex v3);
 
 struct Hole {
 	vector<Vertex> vertices_;

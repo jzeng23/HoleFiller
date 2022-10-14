@@ -9,9 +9,9 @@ vector<double> Triangle::normal() {
 	double y1 = v1.y_ - v2.y_;
 	double z1 = v1.z_ - v2.z_;
 
-	double x2 = v1.x_ - v3.x_;
-	double y2 = v1.y_ - v3.y_;
-	double z2 = v1.z_ - v3.z_;
+	double x2 = v3.x_ - v2.x_;
+	double y2 = v3.y_ - v2.y_;
+	double z2 = v3.z_ - v2.z_;
 
 	vector<double> result;
 	result.push_back(y1 * z2 - z1 * y2);
@@ -43,6 +43,14 @@ vector<int> Triangle::vertexIndexVector() {
 	indices.push_back(this->v2.index_);
 	indices.push_back(this->v3.index_);
 	return indices;
+}
+
+vector<Vertex> Triangle::vertexVector() {
+	vector<Vertex>vertices;
+	vertices.push_back(this->v1);
+	vertices.push_back(this->v2);
+	vertices.push_back(this->v3);
+	return vertices;
 }
 
 bool Triangle::adjacent(Triangle t) {

@@ -13,6 +13,7 @@ struct Triangle {
 	vector<double> normal();
 	double area();
 	vector<int> vertexIndexVector();
+	vector<Vertex> vertexVector();
 	bool adjacent(Triangle t);
 	bool containsPair(int a, int b);
 	int getLone(Triangle t);
