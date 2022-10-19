@@ -40,6 +40,11 @@ double dihedral_angle(Triangle t1, Triangle t2, vector<Vertex>& all_vertices) {
 	vector<int>::iterator v2b = v2.begin();
 	vector<int>::iterator v2e = v2.end();
 	set_intersection(v1b, v1e, v2b, v2e, back_inserter(shared_indices));
+
+	if (shared_indices.size() == 3) {
+		return 0;
+	}
+
 	set_difference(v1b, v1e, v2b, v2e, back_inserter(lone1));
 	set_difference(v2b, v2e, v1b, v1e, back_inserter(lone2));
 
