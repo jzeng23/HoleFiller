@@ -81,25 +81,6 @@ double angle(Vertex A, Vertex B, Vertex C) {
 	return acos(cos_abc);
 }
 
-double dihedral_angle(Vertex shared_1, Vertex shared_2, Vertex lone_1, Vertex lone_2) {
-	//calculates dihedral angle around edge (shared_1, shared_2) in radians
-	auto get_cos = [](Vertex A, Vertex B, Vertex C) {
-		double a = distance(B, C);
-		double b = distance(A, C);
-		double c = distance(A, B);
-
-		double cos_abc = (pow(a, 2) + pow(c, 2) - pow(b, 2)) / (2 * a * c);
-		return cos_abc;
-	};
-
-	double l1_s1_l2 = angle(lone_1, shared_1, lone_2);
-	double l1_s1_s2 = angle(lone_1, shared_1, shared_2);
-	double l2_s1_s2 = angle(lone_2, shared_1, shared_2);
-
-	double cos_result = (cos(l1_s1_l2) - cos(l1_s1_s2) * cos(l2_s1_s2)) / (sin(l1_s1_s2) * sin(l2_s1_s2));
-	return acos(cos_result);
-}
-
 void Hole::add_vertex(Vertex v) {
 	vertices_.push_back(v);
 	return;
@@ -178,6 +159,7 @@ int Hole::add_boundary_triangle(int a, int b, vector<Triangle>& triangles) {
 
 // based on https://www.sciencedirect.com/science/article/pii/016783969400011G, page 220
 void Hole::trace(int i, int k, vector<Triangle>& triangles, vector< vector<Weight> > weights) {
+	
 	if (i + 2 == k) {
 		triangles.push_back(Triangle(vertices_.at(i), vertices_.at(k), vertices_.at(i + 1)));
 		return;
